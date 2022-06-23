@@ -44,7 +44,6 @@ exports.login = asyncHandler( async (req, res, next)=>{
     sendTokenResponse(user, 200, res);
 });
 
-
 // @desc    Get current logged in user
 // @route   POST     /api/v1/auth/me
 // @access  Private
@@ -55,7 +54,6 @@ exports.getMe = asyncHandler( async (req, res, next) => {
         data: user
     })
 })
-
 
 // @desc    Update user details
 // @route   PUT     /api/v1/auth/updatedetails
@@ -97,8 +95,6 @@ exports.updatePassword = asyncHandler( async (req, res, next) => {
     sendTokenResponse(user, 200, res);
 })
 
-
-
 // @desc    Forgot password
 // @route   POST     /api/v1/auth/forgotpassword
 // @access  public
@@ -116,7 +112,6 @@ exports.forgotPassword = asyncHandler( async (req, res, next) => {
     const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/auth/resetpassword/${resetToken}`;
     const message = `You are receiving this email because you or someone else has requested the reset of a password.
                     Please make a PUT request to : \n\n ${resetUrl}`;
-    
     try {
         await sendEmail({
             email: user.email,
@@ -132,6 +127,20 @@ exports.forgotPassword = asyncHandler( async (req, res, next) => {
         await user.save({ validateBeforeSave: false })
         return next( new ErrorResponse(`Email could not be sent`, 500))
     }
+})
+
+// @desc    Log user out/ Clear cookie
+// @route   GET     /api/v1/auth/logout
+// @access  Private
+exports.logout = asyncHandler( async (req, res, next) => {
+    res.cookie('token', 'none', {
+        expires: new Date(Date.now() + 10 * 1000),
+        httpOnly: true
+    })
+    res.status(200).json({
+        success: true,
+        data: {}
+    })
 })
 
 // @desc    Reset password
@@ -160,7 +169,6 @@ exports.resetPassword = asyncHandler( async (req, res, next) => {
     sendTokenResponse(user, 200, res);
 })
 
-
 // Get token from model, create cookie and send response
 const sendTokenResponse = (user, statusCode, res)=>{
     const token = user.getSignedJwtToken();
@@ -173,7 +181,6 @@ const sendTokenResponse = (user, statusCode, res)=>{
     if(process.env.NODE_ENV==='production'){
         options.secure = true
     }
-    
     res
         .status(statusCode)
         .cookie('token', token, options)
